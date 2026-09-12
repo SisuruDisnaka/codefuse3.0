@@ -150,8 +150,8 @@ export function SpiderWebBackground() {
 
       const topLeft = buildCornerWeb(0, 0, reach, spokes, rings, 1.1);
       const topRight = buildCornerWeb(0, 0, reach * 0.85, spokes, rings, 4.4);
-      const bottomLeft = buildCornerWeb(0, 0, reach * 0.95, spokes, rings, 8.8);
-      const bottomRight = buildCornerWeb(0, 0, reach * 0.8, spokes, rings, 13.2);
+      const bottomLeft = buildCornerWeb(0, 0, reach * 1.15, spokes, rings, 8.8);
+      const bottomRight = buildCornerWeb(0, 0, reach * 1.25, spokes, rings, 24.2);
 
       // Mirror + translate each web so it radiates inward from its own corner.
       topRight.nodes.forEach((n) => {

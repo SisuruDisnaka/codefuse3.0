@@ -4,7 +4,7 @@ export const eventConfig = {
   eventName: "CODEFUSE",
   edition: "3.0",
   tagline: "The Web of Code",
-  quote: "Where algorithms meet innovation.",
+  quote: "Where algorithms meet innovation",
   description:
     "CODEFUSE 3.0 is an intra-faculty coding competition organized for students of the Faculty of Computing, University of Sri Jayewardenepura.",
   faculty: "Faculty of Computing",

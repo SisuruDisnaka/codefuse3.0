@@ -41,7 +41,7 @@ export function CodeWall() {
       top: (i / 18) * 100 + rand() * 2,
       duration: 40 + rand() * 30,
       delay: -rand() * 40,
-      opacity: 0.12 + rand() * 0.06,
+      opacity: 0.08 + rand() * 0.06,
     }));
   }, []);
 
