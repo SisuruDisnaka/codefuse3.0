@@ -149,7 +149,39 @@ export function RegistrationForm() {
     }));
   }
 
+  function collectFieldErrors(): Record<string, string> {
+    const parsed = registrationSchema.safeParse(form);
+    const fieldErrors: Record<string, string> = {};
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        fieldErrors[issue.path.join(".")] = issue.message;
+      }
+    }
+    return fieldErrors;
+  }
+
   function goNext() {
+    // The Continue button on step 1 is already disabled while this is
+    // pending/blocked, but guard here too in case of a stray Enter-key
+    // submit or a race with the debounce.
+    if (step === 1 && (teamNameStatus === "taken" || teamNameStatus === "checking")) {
+      return;
+    }
+
+    // Validate the whole form, but only block advancing (and only show
+    // errors) for fields that live on the step the person is currently
+    // on — fields on later steps haven't been filled in yet and
+    // shouldn't stop them from getting there.
+    const fieldErrors = collectFieldErrors();
+    const stepErrors = Object.fromEntries(
+      Object.entries(fieldErrors).filter(([key]) => stepForField(key) === step)
+    );
+
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
+      return;
+    }
+
     setErrors({});
     setStep((s) => (s < 4 ? ((s + 1) as Step) : s));
   }
@@ -365,6 +397,12 @@ export function RegistrationForm() {
                 </div>
               </div>
             ))}
+
+            {errors["members"] && (
+              <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
+                {errors["members"]}
+              </div>
+            )}
 
             <div className="flex justify-between pt-2">
               <button type="button" onClick={goBack} className="text-ink-300 hover:text-ink-100">

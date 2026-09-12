@@ -97,9 +97,12 @@ export const registrationSchema = z
   .superRefine((data, ctx) => {
     // Per-member duplicate flags so the exact offending field(s) can be
     // highlighted in the UI, not just the shared "members" array error.
+    const regNumberCounts = new Map<string, number>();
     const emailCounts = new Map<string, number>();
     const whatsappCounts = new Map<string, number>();
     for (const m of data.members) {
+      const regKey = m.registrationNumber.toLowerCase();
+      regNumberCounts.set(regKey, (regNumberCounts.get(regKey) ?? 0) + 1);
       emailCounts.set(m.email, (emailCounts.get(m.email) ?? 0) + 1);
       whatsappCounts.set(
         m.whatsappNumber,
@@ -107,6 +110,13 @@ export const registrationSchema = z
       );
     }
     data.members.forEach((m, i) => {
+      if ((regNumberCounts.get(m.registrationNumber.toLowerCase()) ?? 0) > 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "This registration number is already used by another member",
+          path: ["members", i, "registrationNumber"],
+        });
+      }
       if ((emailCounts.get(m.email) ?? 0) > 1) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

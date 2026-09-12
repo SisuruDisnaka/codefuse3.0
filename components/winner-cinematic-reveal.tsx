@@ -17,13 +17,13 @@ interface WinnerCinematicRevealProps {
   height: number;
 }
 
-// A pinned, scroll-linked reveal for a single complete winner photograph:
-// the section title fades up, the image scales in, and — as the person
-// keeps scrolling through this section — the image continues to zoom in
-// (never cropping, since it's always shown with object-contain sizing)
-// before releasing naturally into whatever comes next. Driven entirely by
-// framer-motion's scroll-linked MotionValues, so it doesn't cause React
-// re-renders on scroll.
+// A pinned, scroll-linked reveal for a single complete winner photograph.
+// The image appears almost as soon as this section reaches the top of the
+// viewport (no long scroll of near-nothing before it shows up), then
+// keeps growing as the person scrolls further — filling the whole screen
+// by the end of the track — before releasing naturally into whatever
+// comes next. Driven entirely by framer-motion's scroll-linked
+// MotionValues, so it doesn't cause React re-renders on scroll.
 export function WinnerCinematicReveal({
   edition,
   image,
@@ -38,15 +38,28 @@ export function WinnerCinematicReveal({
     offset: ["start start", "end end"],
   });
 
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.86, 1.0, 1.22]);
-  const imageOpacity = useTransform(
+  // The box the image sits in grows from a contained card to the full
+  // sticky viewport (100% x 100%) — that's the "zoom to full screen".
+  const boxWidth = useTransform(
     scrollYProgress,
-    [0, 0.15, 0.88, 1],
-    [0, 1, 1, 0.85]
+    [0, 0.15, 0.85, 1],
+    ["74%", "82%", "100%", "100%"]
   );
-  const blur = useTransform(scrollYProgress, [0, 0.18], ["blur(10px)", "blur(0px)"]);
-  const titleOpacity = useTransform(scrollYProgress, [0, 0.16], [0, 1]);
-  const titleY = useTransform(scrollYProgress, [0, 0.16], [22, 0]);
+  const boxHeight = useTransform(
+    scrollYProgress,
+    [0, 0.15, 0.85, 1],
+    ["58%", "64%", "100%", "100%"]
+  );
+  const radius = useTransform(scrollYProgress, [0.7, 1], ["1.5rem", "0rem"]);
+
+  // Visible almost immediately on entering the section — only ~8% of the
+  // track's scroll distance — instead of staying blurred/invisible for a
+  // long stretch of scrolling.
+  const imageOpacity = useTransform(scrollYProgress, [0, 0.08, 0.94, 1], [0, 1, 1, 0.9]);
+  const blur = useTransform(scrollYProgress, [0, 0.08], ["blur(6px)", "blur(0px)"]);
+  const titleOpacity = useTransform(scrollYProgress, [0, 0.08, 0.7, 1], [0, 1, 1, 0]);
+  const titleY = useTransform(scrollYProgress, [0, 0.08], [14, 0]);
+  const hintOpacity = useTransform(scrollYProgress, [0, 0.06, 0.4], [0, 1, 0]);
 
   if (prefersReducedMotion) {
     // Skip the pinned scroll-driven track entirely — just show the title
@@ -71,8 +84,12 @@ export function WinnerCinematicReveal({
   }
 
   return (
-    <div ref={trackRef} className="relative h-[190vh] sm:h-[220vh]">
-      <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden px-5">
+    // Shorter track than a typical scroll-jacked section on purpose: the
+    // image is already fully visible within the first ~10vh of scrolling
+    // into this section, so the remaining distance is only spent on the
+    // grow-to-full-screen effect, not on making the winners visible.
+    <div ref={trackRef} className="relative h-[140vh] sm:h-[160vh]">
+      <div className="sticky top-16 flex h-[calc(100vh-4rem)] w-full flex-col items-center justify-center overflow-hidden px-5">
         <motion.h2
           style={{ opacity: titleOpacity, y: titleY }}
           className="mb-6 text-center font-display text-2xl font-semibold text-ink-100 sm:text-3xl"
@@ -81,23 +98,31 @@ export function WinnerCinematicReveal({
         </motion.h2>
 
         <motion.div
-          style={{ scale, opacity: imageOpacity, filter: blur }}
-          className="w-full max-w-3xl overflow-hidden rounded-2xl border border-purple-primary/30 shadow-[0_0_60px_rgba(230,25,255,0.2)]"
+          style={{
+            width: boxWidth,
+            height: boxHeight,
+            borderRadius: radius,
+            opacity: imageOpacity,
+            filter: blur,
+          }}
+          className="relative max-w-none overflow-hidden border border-purple-primary/30 shadow-[0_0_60px_rgba(230,25,255,0.2)]"
         >
           <Image
             src={image}
             alt={`${edition} winners`}
-            width={width}
-            height={height}
-            className="h-auto w-full rounded-2xl object-contain"
-            sizes="(max-width: 768px) 100vw, 768px"
+            fill
+            className="object-contain"
+            sizes="100vw"
             priority={false}
           />
         </motion.div>
 
-        <p className="mt-6 text-xs tracking-widest text-ink-400 motion-reduce:hidden">
+        <motion.p
+          style={{ opacity: hintOpacity }}
+          className="mt-6 text-xs tracking-widest text-ink-400 motion-reduce:hidden"
+        >
           scroll
-        </p>
+        </motion.p>
       </div>
     </div>
   );
