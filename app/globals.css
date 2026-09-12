@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Chakra Petch", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background: #05020B;
+  color: #FFFFFF;
+}
+
+.glass-panel {
+  background: rgba(18, 5, 31, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(124, 77, 255, 0.25);
+}
+
+.text-glow {
+  text-shadow: 0 0 24px rgba(166, 77, 248, 0.55);
+}
+
+.thread-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.thread-scroll::-webkit-scrollbar-thumb {
+  background: #7C4DFF;
+  border-radius: 4px;
+}
+
+/* Purple-tinted CODEFUSE spider mark, driven by CSS mask so it stays
+   crisp at any size without pre-baking colored PNG variants. */
+.spider-mark {
+  background: linear-gradient(180deg, #E619FF 0%, #7C4DFF 100%);
+  -webkit-mask-image: url("/spiderman-mark.png");
+  mask-image: url("/spiderman-mark.png");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  filter: drop-shadow(0 0 6px rgba(230, 25, 255, 0.55));
+}
+
+/* Descending spiders: a silk strand that visibly GROWS downward from a
+   web anchor point, with the spider attached to its bottom end the
+   whole time (not a spider translating independently of a static line). */
+@keyframes silk-grow {
+  0%   { height: 0; opacity: 0; }
+  8%   { opacity: 1; }
+  42%  { height: var(--thread-length, 30vh); opacity: 1; }
+  70%  { height: var(--thread-length, 30vh); opacity: 1; }
+  92%  { height: 0; opacity: 0; }
+  100% { height: 0; opacity: 0; }
+}
+
+@keyframes spider-hang {
+  0%, 7%  { opacity: 0; transform: translateY(-6px) rotate(0deg); }
+  12%     { opacity: 1; }
+  42%     { opacity: 1; transform: translateY(0) rotate(-3deg); }
+  56%     { transform: translateY(2px) rotate(3deg); }
+  70%     { opacity: 1; transform: translateY(0) rotate(-2deg); }
+  90%     { opacity: 0; transform: translateY(-8px) rotate(0deg); }
+  100%    { opacity: 0; }
+}
+
+.animate-silk-grow {
+  animation-name: silk-grow;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+  animation-iteration-count: infinite;
+}
+.animate-spider-hang {
+  animation-name: spider-hang;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Reduced motion: keep the descending spiders visible in a settled,
+   fully-extended pose instead of letting the generic 0.01ms override
+   freeze them on an invisible (height:0/opacity:0) animation frame. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-silk-grow {
+    animation: none !important;
+    height: var(--thread-length, 30vh) !important;
+    opacity: 0.55 !important;
+  }
+  .animate-spider-hang {
+    animation: none !important;
+    opacity: 0.85 !important;
+    transform: none !important;
+  }
+}
