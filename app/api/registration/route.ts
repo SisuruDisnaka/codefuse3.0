@@ -90,7 +90,8 @@ export async function POST(req: NextRequest) {
       if (error.message.includes("TEAM_NAME_EXISTS")) {
         const body: RegistrationResponse = {
           success: false,
-          message: "This team name has already entered the web.",
+          message: "This group name has already entered the web.",
+          fieldErrors: { teamName: "This group name is already taken." },
         };
         return NextResponse.json(body, { status: 409 });
       }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle2, Copy } from "lucide-react";
+import { Loader2, CheckCircle2, Copy, Check, X } from "lucide-react";
 import { registrationSchema } from "@/lib/validations/registration";
 import type { TeamMemberInput, RegistrationResponse } from "@/types/registration";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,21 @@ interface FormState {
   githubUrl: string;
   additionalInformation: string;
   members: TeamMemberInput[];
+}
+
+// Which step each field lives on, so a validation error (whether caught
+// client-side or returned by the server) can send the user back to the
+// step where they'll actually see it highlighted.
+function stepForField(field: string): Step {
+  if (field === "teamName" || field === "teamSize") return 1;
+  if (field === "members" || field.startsWith("members.")) return 2;
+  return 3;
+}
+
+function earliestErrorStep(fieldErrors: Record<string, string>): Step | null {
+  const steps = Object.keys(fieldErrors).map(stepForField);
+  if (steps.length === 0) return null;
+  return steps.reduce((min, s) => (s < min ? s : min), steps[0]);
 }
 
 const initialState: FormState = {
@@ -74,6 +89,49 @@ export function RegistrationForm() {
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [result, setResult] = useState<RegistrationResponse | null>(null);
 
+  // Live "is this group name already taken" check against the server,
+  // debounced so we're not firing a request on every keystroke.
+  const [teamNameStatus, setTeamNameStatus] = useState<
+    "idle" | "checking" | "available" | "taken"
+  >("idle");
+  const teamNameCheckId = useRef(0);
+
+  useEffect(() => {
+    const name = form.teamName.trim();
+    if (name.length < 3) {
+      setTeamNameStatus("idle");
+      return;
+    }
+
+    setTeamNameStatus("checking");
+    const requestId = ++teamNameCheckId.current;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/registration/check-team-name?name=${encodeURIComponent(name)}`
+        );
+        const data: { available: boolean | null } = await res.json();
+        if (teamNameCheckId.current !== requestId) return; // stale response
+        if (data.available === null) {
+          setTeamNameStatus("idle");
+        } else {
+          setTeamNameStatus(data.available ? "available" : "taken");
+          setErrors((e) => {
+            if (data.available) {
+              const { teamName: _teamName, ...rest } = e;
+              return rest;
+            }
+            return { ...e, teamName: "This group name is already taken." };
+          });
+        }
+      } catch {
+        if (teamNameCheckId.current === requestId) setTeamNameStatus("idle");
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [form.teamName]);
+
   function updateMemberCount(size: 1 | 2 | 3) {
     setForm((f) => {
       const members: TeamMemberInput[] = Array.from({ length: size }, (_, i) => {
@@ -101,6 +159,12 @@ export function RegistrationForm() {
   }
 
   async function handleSubmit() {
+    if (teamNameStatus === "taken") {
+      setErrors((e) => ({ ...e, teamName: "This group name is already taken." }));
+      setStep(1);
+      return;
+    }
+
     const parsed = registrationSchema.safeParse(form);
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -108,6 +172,8 @@ export function RegistrationForm() {
         fieldErrors[issue.path.join(".")] = issue.message;
       }
       setErrors(fieldErrors);
+      const jumpTo = earliestErrorStep(fieldErrors);
+      if (jumpTo) setStep(jumpTo);
       return;
     }
 
@@ -129,6 +195,8 @@ export function RegistrationForm() {
         setStep(5);
       } else if (data.fieldErrors) {
         setErrors(data.fieldErrors);
+        const jumpTo = earliestErrorStep(data.fieldErrors);
+        if (jumpTo) setStep(jumpTo);
       }
     } catch {
       setResult({
@@ -187,12 +255,28 @@ export function RegistrationForm() {
             className="space-y-5"
           >
             <Field label="Group Name" error={errors["teamName"]}>
-              <input
-                className={inputClass}
-                value={form.teamName}
-                onChange={(e) => setForm({ ...form, teamName: e.target.value })}
-                placeholder="e.g. Xterminators"
-              />
+              <div className="relative">
+                <input
+                  className={cn(inputClass, "pr-10")}
+                  value={form.teamName}
+                  onChange={(e) => setForm({ ...form, teamName: e.target.value })}
+                  placeholder="e.g. Xterminators"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                  {teamNameStatus === "checking" && (
+                    <Loader2 size={16} className="animate-spin text-ink-400" />
+                  )}
+                  {teamNameStatus === "available" && (
+                    <Check size={16} className="text-emerald-400" />
+                  )}
+                  {teamNameStatus === "taken" && (
+                    <X size={16} className="text-red-400" />
+                  )}
+                </span>
+              </div>
+              {teamNameStatus === "available" && !errors["teamName"] && (
+                <p className="mt-1 text-xs text-emerald-400">This group name is available.</p>
+              )}
             </Field>
 
             <Field label="Group Size">
@@ -218,8 +302,9 @@ export function RegistrationForm() {
             <div className="flex justify-end pt-2">
               <button
                 type="button"
+                disabled={teamNameStatus === "taken" || teamNameStatus === "checking"}
                 onClick={goNext}
-                className="rounded-full bg-purple-primary px-6 py-2.5 text-ink-100"
+                className="rounded-full bg-purple-primary px-6 py-2.5 text-ink-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Continue
               </button>
@@ -312,7 +397,7 @@ export function RegistrationForm() {
                 onChange={(e) => setForm({ ...form, teamEmail: e.target.value })}
               />
             </Field>
-            <Field label="Team WhatsApp Number" error={errors["teamWhatsapp"]}>
+            <Field label="Group Leaders WhatsApp Number" error={errors["teamWhatsapp"]}>
               <input
                 className={inputClass}
                 value={form.teamWhatsapp}
@@ -375,7 +460,7 @@ export function RegistrationForm() {
               </p>
               <div className="mt-4 space-y-1 text-ink-300">
                 <p>Team Email: {form.teamEmail}</p>
-                <p>Team WhatsApp: {form.teamWhatsapp}</p>
+                <p>Group Leaders WhatsApp: {form.teamWhatsapp}</p>
                 <p>HackerRank Team: {form.hackerrankTeamName}</p>
               </div>
               <div className="mt-4 space-y-2 border-t border-purple-primary/20 pt-4">
