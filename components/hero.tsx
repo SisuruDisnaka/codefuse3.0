@@ -39,10 +39,9 @@ export function Hero() {
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-        className="mt-6 font-display text-6xl font-bold leading-[0.95] text-ink-100 text-glow sm:text-8xl md:text-9xl"
-      >
+        className="codefuse-glow mt-6 font-display text-6xl font-bold leading-[0.95] text-ink-100 text-glow sm:text-8xl md:text-9xl">
         {eventConfig.eventName}
-        <span className="block text-purple-bright">{eventConfig.edition}</span>
+        <span className="block edition-glow text-purple-bright">{eventConfig.edition}</span>
       </motion.h1>
 
       <motion.p
