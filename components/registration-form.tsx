@@ -6,6 +6,7 @@ import { Loader2, CheckCircle2, Copy, Check, X } from "lucide-react";
 import { registrationSchema } from "@/lib/validations/registration";
 import type { TeamMemberInput, RegistrationResponse } from "@/types/registration";
 import { cn } from "@/lib/utils";
+import { WhatsAppJoinModal } from "@/components/whatsapp-join-modal";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -88,6 +89,7 @@ export function RegistrationForm() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const [result, setResult] = useState<RegistrationResponse | null>(null);
+  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
 
   // Live "is this group name already taken" check against the server,
   // debounced so we're not firing a request on every keystroke.
@@ -225,6 +227,9 @@ export function RegistrationForm() {
       setResult(data);
       if (data.success) {
         setStep(5);
+        // Small delay so the success step is visible for a beat before
+        // the join prompt appears on top of it.
+        setTimeout(() => setShowWhatsappModal(true), 500);
       } else if (data.fieldErrors) {
         setErrors(data.fieldErrors);
         const jumpTo = earliestErrorStep(data.fieldErrors);
@@ -579,9 +584,24 @@ export function RegistrationForm() {
             >
               Back to Home
             </a>
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowWhatsappModal(true)}
+                className="mt-4 text-sm text-ink-300 underline-offset-4 hover:text-ink-100 hover:underline"
+              >
+                Join the WhatsApp group
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <WhatsAppJoinModal
+        open={showWhatsappModal}
+        onClose={() => setShowWhatsappModal(false)}
+      />
     </div>
   );
 }

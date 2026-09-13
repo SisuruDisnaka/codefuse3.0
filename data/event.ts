@@ -31,4 +31,8 @@ export const eventConfig = {
     linkedin: "",
     email: "",
   },
+
+  // Official participants' WhatsApp group, shown as a join prompt right
+  // after a successful registration.
+  whatsappGroupUrl: "https://chat.whatsapp.com/EOctUESJXWUGNW9Lgfme2U?s=qt&p=i&mlu=4&ilr=4",
 } as const;
