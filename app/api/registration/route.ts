@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
     const { data: rpcData, error } = await supabase.rpc("register_team", {
       p_team_name: data.teamName,
       p_team_size: data.teamSize,
+      p_year_of_study: data.yearOfStudy,
       p_team_email: data.teamEmail,
       p_team_whatsapp: data.teamWhatsapp,
       p_hackerrank_team_name: data.hackerrankTeamName,

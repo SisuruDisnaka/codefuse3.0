@@ -9,6 +9,7 @@ export interface TeamMemberInput {
 export interface RegistrationInput {
   teamName: string;
   teamSize: 1 | 2 | 3;
+  yearOfStudy: "1st Year" | "2nd Year" | "3rd Year" | "4th Year";
   teamEmail: string;
   teamWhatsapp: string;
   hackerrankTeamName: string;

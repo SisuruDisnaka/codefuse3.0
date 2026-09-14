@@ -11,6 +11,7 @@ create table if not exists teams (
   registration_code text not null unique,
   team_name text not null unique,
   team_size integer not null check (team_size between 1 and 3),
+  year_of_study text not null check (year_of_study in ('1st Year', '2nd Year', '3rd Year', '4th Year')),
   team_email text not null,
   team_whatsapp text not null,
   hackerrank_team_name text,
@@ -87,6 +88,7 @@ $$ language plpgsql;
 create or replace function register_team(
   p_team_name text,
   p_team_size integer,
+  p_year_of_study text,
   p_team_email text,
   p_team_whatsapp text,
   p_hackerrank_team_name text,
@@ -108,14 +110,18 @@ begin
     raise exception 'MEMBER_COUNT_MISMATCH';
   end if;
 
+  if p_year_of_study not in ('1st Year', '2nd Year', '3rd Year', '4th Year') then
+    raise exception 'INVALID_YEAR_OF_STUDY';
+  end if;
+
   v_code := generate_registration_code();
 
   insert into teams (
-    registration_code, team_name, team_size,
+    registration_code, team_name, team_size, year_of_study,
     team_email, team_whatsapp, hackerrank_team_name, github_url,
     additional_information, status
   ) values (
-    v_code, p_team_name, p_team_size,
+    v_code, p_team_name, p_team_size, p_year_of_study,
     p_team_email, p_team_whatsapp, p_hackerrank_team_name, p_github_url,
     p_additional_information, 'submitted'
   ) returning id into v_team_id;

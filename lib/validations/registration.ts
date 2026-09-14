@@ -47,6 +47,9 @@ export const registrationSchema = z
         "Group name can only contain letters, numbers, spaces and . _ ' -"
       ),
     teamSize: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    yearOfStudy: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year"], {
+      errorMap: () => ({ message: "Select your year of study" }),
+    }),
     teamEmail: emailField("Enter a valid team email"),
     teamWhatsapp: whatsappField,
     hackerrankTeamName: z.string().trim().min(2).max(60),

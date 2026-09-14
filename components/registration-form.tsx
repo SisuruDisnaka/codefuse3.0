@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle2, Copy, Check, X } from "lucide-react";
+import { Loader2, CheckCircle2, Copy, Check, X, ChevronDown } from "lucide-react";
 import { registrationSchema } from "@/lib/validations/registration";
 import type { TeamMemberInput, RegistrationResponse } from "@/types/registration";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ const emptyMember = (memberNumber: 1 | 2 | 3): TeamMemberInput => ({
 interface FormState {
   teamName: string;
   teamSize: 1 | 2 | 3;
+  yearOfStudy: "" | "1st Year" | "2nd Year" | "3rd Year" | "4th Year";
   teamEmail: string;
   teamWhatsapp: string;
   hackerrankTeamName: string;
@@ -39,7 +40,7 @@ interface FormState {
 // client-side or returned by the server) can send the user back to the
 // step where they'll actually see it highlighted.
 function stepForField(field: string): Step {
-  if (field === "teamName" || field === "teamSize") return 1;
+  if (field === "teamName" || field === "teamSize" || field === "yearOfStudy") return 1;
   if (field === "members" || field.startsWith("members.")) return 2;
   return 3;
 }
@@ -53,11 +54,12 @@ function earliestErrorStep(fieldErrors: Record<string, string>): Step | null {
 const initialState: FormState = {
   teamName: "",
   teamSize: 1,
+  yearOfStudy: "",
   teamEmail: "",
   teamWhatsapp: "",
   hackerrankTeamName: "",
-  githubUrl: "",
   additionalInformation: "",
+  githubUrl: "",
   members: [emptyMember(1)],
 };
 
@@ -81,6 +83,9 @@ function Field({
 
 const inputClass =
   "w-full rounded-lg border border-purple-primary/30 bg-void-900/60 px-4 py-2.5 text-ink-100 outline-none transition focus:border-purple-neon focus:shadow-[0_0_0_3px_rgba(230, 25, 255,0.15)]";
+
+const selectClass =
+  "glass-panel w-full appearance-none rounded-lg border border-purple-primary/30 px-4 py-2.5 pr-10 text-ink-100 outline-none transition cursor-pointer hover:border-purple-primary/50 focus:border-purple-neon focus:shadow-[0_0_0_3px_rgba(230,25,255,0.15)]";
 
 export function RegistrationForm() {
   const [step, setStep] = useState<Step>(1);
@@ -316,6 +321,41 @@ export function RegistrationForm() {
               )}
             </Field>
 
+            <Field label="Year of Study" error={errors["yearOfStudy"]}>
+              <div className="relative">
+                <select
+                  className={selectClass}
+                  value={form.yearOfStudy}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      yearOfStudy: e.target.value as FormState["yearOfStudy"],
+                    })
+                  }
+                >
+                  <option value="" disabled className="bg-void-900 text-ink-400">
+                    Select year of study
+                  </option>
+                  <option value="1st Year" className="bg-void-900 text-ink-100">
+                    1st Year
+                  </option>
+                  <option value="2nd Year" className="bg-void-900 text-ink-100">
+                    2nd Year
+                  </option>
+                  <option value="3rd Year" className="bg-void-900 text-ink-100">
+                    3rd Year
+                  </option>
+                  <option value="4th Year" className="bg-void-900 text-ink-100">
+                    4th Year
+                  </option>
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-purple-neon"
+                />
+              </div>
+            </Field>
+
             <Field label="Group Size">
               <div className="flex gap-3">
                 {[1, 2, 3].map((n) => (
@@ -499,7 +539,7 @@ export function RegistrationForm() {
             <div className="glass-panel rounded-2xl p-6 text-sm">
               <p className="font-display text-lg text-ink-100">{form.teamName}</p>
               <p className="mt-1 text-ink-400">
-                {form.teamSize} member{form.teamSize > 1 ? "s" : ""}
+                {form.teamSize} member{form.teamSize > 1 ? "s" : ""} · {form.yearOfStudy}
               </p>
               <div className="mt-4 space-y-1 text-ink-300">
                 <p>Team Email: {form.teamEmail}</p>
