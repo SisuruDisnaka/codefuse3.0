@@ -7,6 +7,7 @@ import { registrationSchema } from "@/lib/validations/registration";
 import type { TeamMemberInput, RegistrationResponse } from "@/types/registration";
 import { cn } from "@/lib/utils";
 import { WhatsAppJoinModal } from "@/components/whatsapp-join-modal";
+import { eventConfig } from "@/data/event";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -49,6 +50,20 @@ function earliestErrorStep(fieldErrors: Record<string, string>): Step | null {
   const steps = Object.keys(fieldErrors).map(stepForField);
   if (steps.length === 0) return null;
   return steps.reduce((min, s) => (s < min ? s : min), steps[0]);
+}
+
+// Builds a "click to chat" wa.me link, pre-filled with an invite message,
+// so the team leader can send it to a teammate with one tap. There's no
+// way to actually send a WhatsApp message on someone's behalf without
+// the paid, business-verified WhatsApp Business API — this is the
+// closest no-cost equivalent WhatsApp's own linking scheme allows.
+function whatsappInviteLink(whatsappNumber: string, memberName: string, teamName: string): string {
+  const digitsOnly = whatsappNumber.replace(/[^0-9]/g, "");
+  const message =
+    `Hi ${memberName || "there"}! You're registered for ` +
+    `${eventConfig.eventName} ${eventConfig.edition} as part of team "${teamName || "our team"}". ` +
+    `Join the participants' WhatsApp group here: ${eventConfig.whatsappGroupUrl}`;
+  return `https://wa.me/${digitsOnly}?text=${encodeURIComponent(message)}`;
 }
 
 const initialState: FormState = {
@@ -618,22 +633,44 @@ export function RegistrationForm() {
               <p>HackerRank Team: {form.hackerrankTeamName}</p>
             </div>
 
+
+            {form.members.length > 1 && (
+              <div className="mx-auto mt-8 max-w-xs border-t border-purple-primary/20 pt-6">
+                <p className="text-xs uppercase tracking-widest text-ink-400">
+                  Invite your team
+                </p>
+                <p className="mt-1 text-xs text-ink-400">
+                  One tap opens WhatsApp with the group link ready to send.
+                </p>
+                <div className="mt-4 space-y-2">
+                  {form.members.slice(1).map((member, i) => (
+                    <a
+                      key={i}
+                      href={whatsappInviteLink(member.whatsappNumber, member.fullName, form.teamName)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/20"
+                    >
+                      Invite {member.fullName || `Member ${i + 2}`}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowWhatsappModal(true)}
+              className="mt-4 text-sm text-ink-300 underline-offset-4 hover:text-ink-100 hover:underline"
+            >
+              Join the WhatsApp group
+            </button>
+            <br />
             <a
               href="/"
               className="mt-8 inline-block rounded-full bg-purple-primary px-8 py-3 font-medium text-ink-100"
             >
               Back to Home
             </a>
-
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowWhatsappModal(true)}
-                className="mt-4 text-sm text-ink-300 underline-offset-4 hover:text-ink-100 hover:underline"
-              >
-                Join the WhatsApp group
-              </button>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
