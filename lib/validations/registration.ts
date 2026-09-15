@@ -90,13 +90,6 @@ export const registrationSchema = z
     },
     { message: "Each member must use a different WhatsApp number", path: ["members"] }
   )
-  .refine(
-    (data) => !data.members.some((m) => m.email === data.teamEmail),
-    {
-      message: "Team email must be different from a member's email",
-      path: ["teamEmail"],
-    }
-  )
   .superRefine((data, ctx) => {
     // Per-member duplicate flags so the exact offending field(s) can be
     // highlighted in the UI, not just the shared "members" array error.
